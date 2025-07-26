@@ -525,6 +525,7 @@ object SystemUIHooker : YukiBaseHooker() {
                     if (ConfigData.isEnableMd3NotifyIconStyle) {
                         /** 通知图标边框圆角大小 */
                         background = DrawableBuilder()
+                            .rectangle()
                             .cornerRadius(ConfigData.notifyIconCornerSize.dp(context))
                             .solidColor(newApplyColor)
                             .build()
