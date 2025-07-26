@@ -505,9 +505,6 @@ object SystemUIHooker : YukiBaseHooker() {
                     /** 旧版风格 */
                     val oldStyle = if (context.isSystemInDarkMode) 0xFFDCDCDC.toInt() else 0xFF707173.toInt()
 
-                    /** 新版风格 */
-                    val newStyle = if (context.isSystemInDarkMode) 0xFFDCDCDC.toInt() else Color.WHITE
-
                     /** 原生着色 */
                     val md3Style = if (isUpperOfAndroidS) context.systemAccentColor else
                         (if (context.isSystemInDarkMode) 0xFF707173.toInt() else oldStyle)
@@ -528,11 +525,10 @@ object SystemUIHooker : YukiBaseHooker() {
                     if (ConfigData.isEnableMd3NotifyIconStyle) {
                         /** 通知图标边框圆角大小 */
                         background = DrawableBuilder()
-                            .rectangle()
                             .cornerRadius(ConfigData.notifyIconCornerSize.dp(context))
                             .solidColor(newApplyColor)
                             .build()
-                        setColorFilter(newStyle)
+                        setColorFilter(if (newApplyColor == -1) Color.BLACK else Color.WHITE)
                         setPadding(2.dp(context), 2.dp(context), 2.dp(context), 2.dp(context))
                     } else {
                         background = null
@@ -715,6 +711,12 @@ object SystemUIHooker : YukiBaseHooker() {
         }?.hook()?.before {
             resultFalse()
         }
+        /** 拦截通知使用应用图标判断 */
+        Notification::class.java.resolve().optional().firstMethodOrNull {
+            name = "shouldUseAppIcon"
+        }?.hook()?.before {
+            resultFalse()
+        }
         /** 修复并替换 ColorOS 以及原生灰度图标色彩判断 */
         NotificationUtilsClass.resolve().optional(silent = true).apply {
             firstMethodOrNull {
@@ -781,9 +783,9 @@ object SystemUIHooker : YukiBaseHooker() {
                 name = "updateIconsForLayout"
                 parameterCount = 1
             }?.apply { way = 1 }
-                ?: firstMethodOrNull {
-                    name = "updateIconsForLayout"
-                }?.apply { way = 2 })?.hook()?.after {
+            ?: firstMethodOrNull {
+                name = "updateIconsForLayout"
+            }?.apply { way = 2 })?.hook()?.after {
                 when (way) {
                     2 -> notificationIconContainer = OplusNotificationIconAreaControllerClass.resolve().optional()
                         .firstMethodOrNull { name = "getNotificationIcons" }
@@ -877,6 +879,38 @@ object SystemUIHooker : YukiBaseHooker() {
             }
         }
         /** 替换通知图标和样式 */
+        NotificationHeaderViewWrapperClass.resolve().optional().apply {
+            method {
+                name { it == "updateExpandability" || it == "setExpanded" }
+            }.hookAll().before {
+                firstFieldOrNull { name = "mIcon" }?.of(instance)?.get<ImageView>()?.apply {
+                    ExpandableNotificationRowClass.resolve().optional()
+                        .firstMethodOrNull { name = "getEntry" }
+                        ?.of(NotificationViewWrapperClass.resolve().optional().firstFieldOrNull {
+                            name = "mRow"
+                        }?.of(instance)?.get())?.invokeQuietly()?.let {
+                            it.asResolver().optional().firstMethodOrNull {
+                                name = "getSbn"
+                            }?.invoke<StatusBarNotification>()
+                        }.also { nf ->
+                            nf?.notification?.also {
+                                it.smallIcon.loadDrawable(context)?.also { iconDrawable ->
+                                    /** 执行替换 */
+                                    compatNotifyIcon(
+                                        context = context,
+                                        nf = nf,
+                                        isGrayscaleIcon = isGrayscaleIcon(context, iconDrawable),
+                                        packageName = context.packageName,
+                                        drawable = iconDrawable,
+                                        iconColor = it.color,
+                                        iconView = this
+                                    )
+                                }
+                            }
+                        }
+                }
+            }
+        }
         NotificationHeaderViewWrapperClass.resolve().optional().apply {
             method {
                 name { it == "resolveHeaderViews" || it == "onContentUpdated" }

@@ -47,7 +47,10 @@ object HookEntry : IYukiHookXposedInit {
 
     override fun onHook() = encase {
         if (isNotColorOS) return@encase YLog.warn("Aborted Hook -> This System is not ColorOS")
-        loadSystem(FrameworkHooker)
+        loadSystem {
+            ConfigData.init(instance = this)
+            loadHooker(FrameworkHooker)
+        }
         loadApp(PackageName.SYSTEMUI) {
             ConfigData.init(instance = this)
             if (ConfigData.isEnableModule)
