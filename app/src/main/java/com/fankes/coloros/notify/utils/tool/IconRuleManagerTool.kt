@@ -415,33 +415,7 @@ object IconRuleManagerTool {
      * @param isRetry 是否发送重试动作 - 默认否
      */
     private fun pushNotify(context: Context, title: String, msg: String, isRetry: Boolean = false) {
-        if (context !is AppCompatActivity)
-            context.getSystemService<NotificationManager>()?.apply {
-                createNotificationChannel(
-                    NotificationChannel(
-                        NOTIFY_CHANNEL, "通知图标优化规则",
-                        NotificationManager.IMPORTANCE_DEFAULT
-                    )
-                )
-                notify(0, NotificationCompat.Builder(context, NOTIFY_CHANNEL).apply {
-                    setContentTitle(title)
-                    setContentText(msg)
-                    color = OS_COLOR
-                    setAutoCancel(true)
-                    setSmallIcon(R.drawable.ic_nf_icon_update)
-                    setSound(null)
-                    setDefaults(NotificationCompat.DEFAULT_ALL)
-                    setContentIntent(
-                        PendingIntent.getActivity(
-                            context, msg.hashCode(),
-                            Intent(context, ConfigureActivity::class.java).apply {
-                                if (isRetry) putExtra("isDirectUpdate", true) else putExtra("isShowUpdDialog", false)
-                            },
-                            if (Build.VERSION.SDK_INT < 31) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_IMMUTABLE
-                        )
-                    )
-                }.build())
-            }
+         
     }
 
     /**
