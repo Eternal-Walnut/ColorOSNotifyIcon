@@ -528,7 +528,7 @@ object SystemUIHooker : YukiBaseHooker() {
         iconView: ImageView,
         header: Boolean = false
     ) = runInSafe {
-        compatCustomIcon(context, isGrayscaleIcon, if (nf?.isOplusPush) nf?.packageName else packageName).also { customTriple ->
+        compatCustomIcon(context, isGrayscaleIcon, if (nf.isOplusPush) nf.packageName else packageName).also { customTriple ->
             when {
                 ConfigData.isEnableNotifyIconForceAppIcon -> iconView.apply {
                     /** 重新设置图标 */
@@ -1035,7 +1035,7 @@ object SystemUIHooker : YukiBaseHooker() {
                                             context = context,
                                             nf = nf,
                                             isGrayscaleIcon = isGrayscaleIcon(context, iconDrawable),
-                                            packageName = if (nf?.isOplusPush) nf?.packageName else context.packageName,
+                                            packageName = context.packageName,
                                             drawable = iconDrawable,
                                             iconColor = it.color,
                                             iconView = this
