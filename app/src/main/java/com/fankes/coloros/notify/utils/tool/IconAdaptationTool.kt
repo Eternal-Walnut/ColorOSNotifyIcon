@@ -64,41 +64,7 @@ object IconAdaptationTool {
      * @param packageName 安装的 APP 包名
      */
     fun pushNewAppSupportNotify(context: Context, packageName: String) {
-        if (packageName.startsWith("com.google.android.trichromelibrary")) return
-        if (context.isSystemApp(packageName) || context.isDebugApp(packageName)) return
-        context.getSystemService(NotificationManager::class.java)?.apply {
-            createNotificationChannel(
-                NotificationChannel(
-                    NOTIFY_CHANNEL, "通知图标优化适配",
-                    NotificationManager.IMPORTANCE_DEFAULT
-                ).apply { enableLights(false) }
-            )
-            notify(packageName.hashCode(), Notification.Builder(context, NOTIFY_CHANNEL).apply {
-                setShowWhen(true)
-                setContentTitle("您已安装 ${context.appNameOf(packageName)}")
-                setContentText("尚未适配此应用，点按打开在线规则。")
-                setColor(0xFF2993F0.toInt())
-                setAutoCancel(true)
-                setSmallIcon(Icon.createWithResource(MODULE_PACKAGE_NAME, R.drawable.ic_unsupported))
-                setLargeIcon(context.appIconOf(packageName)?.toBitmap())
-                setContentIntent(
-                    PendingIntent.getActivity(
-                        context, packageName.hashCode(),
-                        Intent().apply {
-                            component = ComponentName(
-                                MODULE_PACKAGE_NAME,
-                                "$MODULE_PACKAGE_NAME.ui.activity.ConfigureActivity"
-                            )
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        }.apply {
-                            putExtra("isNewAppSupport", true)
-                            putExtra("appName", context.appNameOf(packageName))
-                            putExtra("pkgName", packageName)
-                        }, if (Build.VERSION.SDK_INT < 31) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_IMMUTABLE
-                    )
-                )
-            }.build())
-        }
+    
     }
 
     /**
